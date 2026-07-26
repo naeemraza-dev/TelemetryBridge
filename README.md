@@ -223,17 +223,6 @@ injection, dashboard SSO/RBAC, controlled retention, and removal of debug endpoi
 Telemetry safety is defense in depth: application allowlisting plus Collector deletion rules.
 See [docs/security-and-privacy.md](docs/security-and-privacy.md).
 
-## Implementation status
-
-Phases 1–6 and the container-focused portions of Phase 7 are implemented: end-to-end
-propagation, worker/message context, EF/Npgsql telemetry, NLog correlation, optional vendor
-exporters, head/tail/hybrid sampling, cost estimation, cardinality controls, Strangler rollout
-and rollback, OpenAPI contracts, admin authorization/audit/history, dashboards/alerts, and
-unit/integration/contract/E2E/load suites.
-
-Kubernetes manifests and Helm packaging are intentionally deferred at the user's request.
-Docker Desktop remains the supported deployment for this delivery.
-
 ## Known limitations
 
 - `EnsureCreated` is used for local convenience; production requires reviewed EF migrations.
