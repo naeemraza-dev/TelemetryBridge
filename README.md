@@ -13,21 +13,51 @@ Exporter failure is asynchronous and does not become a business-operation depend
 
 ```mermaid
 flowchart LR
-    Browser[React + browser SDK] -->|W3C trace context| Facade[YARP Strangler facade]
-    Facade -->|orders / rollout| API[Modern ASP.NET Core API]
-    Facade -->|customers / baseline| Legacy[Legacy API + NLog]
-    API --> Internal[Internal inventory API]
-    API -->|durable work item| DB[(PostgreSQL)]
-    Worker[Background worker] --> DB
-    Browser -->|OTLP/HTTP| Collector[OTel Collector]
-    Facade -->|OTLP/gRPC| Collector
-    API -->|OTLP/gRPC| Collector
-    Legacy -->|OTLP/gRPC| Collector
-    Internal -->|OTLP/gRPC| Collector
-    Worker -->|OTLP/gRPC| Collector
-    Collector --> Tempo
-    Collector --> Prometheus
-    Collector --> Loki
+
+    subgraph Client["Client Layer"]
+        Browser["React Frontend<br/>Browser OpenTelemetry SDK"]
+    end
+
+    subgraph Applications["Application Layer"]
+        Facade["YARP Strangler Facade"]
+        Legacy["Legacy API<br/>NLog"]
+
+        subgraph Modern["Modern Services"]
+            API["Modern ASP.NET Core API"]
+            Internal["Internal Inventory API"]
+            Worker["Background Worker"]
+            DB[("PostgreSQL")]
+        end
+    end
+
+    subgraph Observability["Observability Pipeline"]
+        Collector["OpenTelemetry Collector"]
+        Tempo["Tempo<br/>Traces"]
+        Prometheus["Prometheus<br/>Metrics"]
+        Loki["Loki<br/>Logs"]
+        Grafana["Grafana"]
+    end
+
+    Browser -->|"W3C Trace Context"| Facade
+
+    Facade -->|"Orders / Modern Rollout"| API
+    Facade -->|"Customers / Legacy Baseline"| Legacy
+
+    API --> Internal
+    API -->|"Create Durable Work Item"| DB
+    Worker -->|"Read and Process Work Item"| DB
+
+    Browser -.->|"OTLP / HTTP"| Collector
+    Facade -.->|"OTLP / gRPC"| Collector
+    API -.->|"OTLP / gRPC"| Collector
+    Legacy -.->|"OTLP / gRPC"| Collector
+    Internal -.->|"OTLP / gRPC"| Collector
+    Worker -.->|"OTLP / gRPC"| Collector
+
+    Collector -->|"Traces"| Tempo
+    Collector -->|"Metrics"| Prometheus
+    Collector -->|"Logs"| Loki
+
     Tempo --> Grafana
     Prometheus --> Grafana
     Loki --> Grafana
