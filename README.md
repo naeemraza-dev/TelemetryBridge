@@ -12,45 +12,39 @@ Exporter failure is asynchronous and does not become a business-operation depend
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TB
 
-    subgraph Client["Client Layer"]
-        Browser["React Frontend<br/>Browser OpenTelemetry SDK"]
-    end
+    Browser["React Frontend<br/>Browser OpenTelemetry SDK"]
 
-    subgraph Applications["Application Layer"]
-        Facade["YARP Strangler Facade"]
-        Legacy["Legacy API<br/>NLog"]
+    Facade["YARP Strangler Facade"]
 
-        subgraph Modern["Modern Services"]
-            API["Modern ASP.NET Core API"]
-            Internal["Internal Inventory API"]
-            Worker["Background Worker"]
-            DB[("PostgreSQL")]
-        end
-    end
+    Legacy["Legacy API<br/>NLog"]
 
-    subgraph Observability["Observability Pipeline"]
-        Collector["OpenTelemetry Collector"]
-        Tempo["Tempo<br/>Traces"]
-        Prometheus["Prometheus<br/>Metrics"]
-        Loki["Loki<br/>Logs"]
-        Grafana["Grafana"]
-    end
+    API["Modern ASP.NET Core API"]
+    Internal["Internal Inventory API"]
+    DB[("PostgreSQL")]
+    Worker["Background Worker"]
+
+    Collector["OpenTelemetry Collector"]
+
+    Tempo["Tempo<br/>Trace Storage"]
+    Prometheus["Prometheus<br/>Metric Storage"]
+    Loki["Loki<br/>Log Storage"]
+    Grafana["Grafana<br/>Visualization"]
 
     Browser -->|"W3C Trace Context"| Facade
 
-    Facade -->|"Orders / Modern Rollout"| API
-    Facade -->|"Customers / Legacy Baseline"| Legacy
+    Facade -->|"Legacy Route"| Legacy
+    Facade -->|"Modern Route"| API
 
-    API --> Internal
-    API -->|"Create Durable Work Item"| DB
+    API -->|"Internal API Call"| Internal
+    API -->|"Persist Durable Work Item"| DB
     Worker -->|"Read and Process Work Item"| DB
 
     Browser -.->|"OTLP / HTTP"| Collector
     Facade -.->|"OTLP / gRPC"| Collector
-    API -.->|"OTLP / gRPC"| Collector
     Legacy -.->|"OTLP / gRPC"| Collector
+    API -.->|"OTLP / gRPC"| Collector
     Internal -.->|"OTLP / gRPC"| Collector
     Worker -.->|"OTLP / gRPC"| Collector
 
