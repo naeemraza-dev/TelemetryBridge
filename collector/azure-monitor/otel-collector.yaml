@@ -1,0 +1,62 @@
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  file_storage:
+    directory: /var/lib/otelcol/queue
+    create_directory: true
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+  attributes/security:
+    actions:
+      - key: http.request.header.authorization
+        action: delete
+      - key: http.request.header.cookie
+        action: delete
+      - key: http.response.header.set-cookie
+        action: delete
+      - key: url.query
+        action: delete
+      - key: url.full
+        action: delete
+      - key: http.url
+        action: delete
+      - key: db.query.text
+        action: delete
+      - key: db.statement
+        action: delete
+      - key: user.id
+        action: delete
+      - key: user.email
+        action: delete
+  batch:
+
+exporters:
+  azuremonitor:
+    connection_string: ${env:APPLICATIONINSIGHTS_CONNECTION_STRING}
+    sending_queue:
+      enabled: true
+      queue_size: 4096
+      storage: file_storage
+
+service:
+  extensions: [health_check, file_storage]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/security, batch]
+      exporters: [azuremonitor]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/security, batch]
+      exporters: [azuremonitor]

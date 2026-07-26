@@ -1,0 +1,25 @@
+{
+  "description": "Importable specification; replace service/environment scopes before use.",
+  "monitors": [
+    {
+      "name": "TelemetryBridge high API error rate",
+      "type": "query alert",
+      "query": "sum(last_10m):sum:trace.aspnet_core.request.errors{service:telemetrybridge-*}.as_count() / sum:trace.aspnet_core.request.hits{service:telemetrybridge-*}.as_count() > 0.05"
+    },
+    {
+      "name": "TelemetryBridge high API latency",
+      "type": "query alert",
+      "query": "percentile(last_10m):p95:trace.aspnet_core.request.duration{service:telemetrybridge-*} > 2"
+    },
+    {
+      "name": "TelemetryBridge Collector export failure",
+      "type": "query alert",
+      "query": "sum(last_5m):sum:otelcol_exporter_send_failed_spans{*}.as_count() > 0"
+    }
+  ],
+  "notes": [
+    "Use the Collector Datadog exporter as the single ingestion owner.",
+    "Disable overlapping Datadog agent APM/log injection before enabling duplicate signals.",
+    "Inject DD_API_KEY and DD_SITE at deployment time; never store them in this file."
+  ]
+}

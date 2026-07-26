@@ -1,0 +1,13 @@
+{
+  "requestsPerSecond": 100,
+  "averageSpansPerTrace": 8,
+  "averageSpanSizeBytes": 1200,
+  "traceSamplingPercentage": 10,
+  "logsPerRequest": 2,
+  "averageLogSizeBytes": 800,
+  "metricSeriesCount": 5000,
+  "retentionDays": 14,
+  "numberOfExportBackends": 1,
+  "pricePerIngestedGb": null,
+  "monthlyCollectorInfrastructureCost": 0
+}

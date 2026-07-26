@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <Description>Authenticated operational configuration and audit API.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TelemetryBridge.AspNetCore/TelemetryBridge.AspNetCore.csproj" />
+    <ProjectReference Include="../TelemetryBridge.Core/TelemetryBridge.Core.csproj" />
+  </ItemGroup>
+</Project>

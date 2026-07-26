@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Vendor-neutral activities, metrics, and telemetry safety policies for TelemetryBridge.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>TelemetryBridge.Core</PackageId>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Api" />
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

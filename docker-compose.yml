@@ -1,0 +1,272 @@
+name: telemetrybridge
+
+services:
+  volume-init:
+    image: busybox:1.37.0
+    user: "0:0"
+    command:
+      - sh
+      - -c
+      - chown -R 10001:10001 /collector-queue && chown -R 1654:1654 /migration-config
+    volumes:
+      - collector-queue:/collector-queue
+      - migration-config:/migration-config
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: telemetrybridge
+      POSTGRES_USER: telemetrybridge
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U telemetrybridge -d telemetrybridge"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  tempo:
+    image: telemetrybridge-tempo:2.10.5
+    build:
+      context: .
+      dockerfile: deployment/docker/observability-healthcheck.Dockerfile
+      args:
+        BASE_IMAGE: grafana/tempo:2.10.5
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./deployment/docker/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    healthcheck:
+      test: ["CMD", "/bin/busybox", "wget", "-q", "--spider", "http://127.0.0.1:3200/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "3200:3200"
+
+  loki:
+    image: telemetrybridge-loki:3.7.2
+    build:
+      context: .
+      dockerfile: deployment/docker/observability-healthcheck.Dockerfile
+      args:
+        BASE_IMAGE: grafana/loki:3.7.2
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - ./deployment/docker/loki.yaml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+    healthcheck:
+      test: ["CMD", "/bin/busybox", "wget", "-q", "--spider", "http://127.0.0.1:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.153.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./collector/base/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+      - collector-queue:/var/lib/otelcol/queue
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "13133:13133"
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
+      tempo:
+        condition: service_started
+      loki:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v3.10.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+      - --storage.tsdb.retention.time=24h
+    volumes:
+      - ./deployment/docker/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - ./deployment/docker/alerts.yaml:/etc/prometheus/alerts.yaml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - otel-collector
+
+  grafana:
+    image: grafana/grafana:13.1.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./deployment/docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards/grafana:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+
+  internal-api:
+    build:
+      context: .
+      dockerfile: src/TelemetryBridge.Sample.InternalApi/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Development
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: "1.0"
+      DEPLOYMENT_ENVIRONMENT: local
+    ports:
+      - "8082:8080"
+    depends_on:
+      otel-collector:
+        condition: service_started
+
+  legacy-api:
+    build:
+      context: .
+      dockerfile: src/TelemetryBridge.Sample.LegacyApi/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Development
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: "1.0"
+      DEPLOYMENT_ENVIRONMENT: local
+    ports:
+      - "8083:8080"
+    depends_on:
+      otel-collector:
+        condition: service_started
+
+  modern-api:
+    build:
+      context: .
+      dockerfile: src/TelemetryBridge.Sample.ModernApi/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Development
+      Database__Host: postgres
+      Database__Port: "5432"
+      Database__Name: telemetrybridge
+      Database__Username: telemetrybridge
+      Services__InternalApi: http://internal-api:8080
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: "1.0"
+      DEPLOYMENT_ENVIRONMENT: local
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+      internal-api:
+        condition: service_started
+
+  worker:
+    build:
+      context: .
+      dockerfile: src/TelemetryBridge.Sample.Worker/Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      Database__Host: postgres
+      Database__Port: "5432"
+      Database__Name: telemetrybridge
+      Database__Username: telemetrybridge
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: "1.0"
+      DEPLOYMENT_ENVIRONMENT: local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+
+  facade:
+    build:
+      context: .
+      dockerfile: src/TelemetryBridge.StranglerFacade/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Development
+      Backends__Modern: http://modern-api:8080/
+      Backends__Legacy: http://legacy-api:8080/
+      Migration__FilePath: /config/migration.json
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: "1.0"
+      DEPLOYMENT_ENVIRONMENT: local
+    ports:
+      - "8080:8080"
+    volumes:
+      - migration-config:/config
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
+      modern-api:
+        condition: service_started
+      legacy-api:
+        condition: service_started
+
+  admin-api:
+    build:
+      context: .
+      dockerfile: src/TelemetryBridge.AdminApi/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Development
+      Security__AdminKey: ${TELEMETRYBRIDGE_ADMIN_KEY:-}
+      Security__OperatorKey: ${TELEMETRYBRIDGE_OPERATOR_KEY:-}
+      Migration__FilePath: /config/migration.json
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      DEPLOYMENT_ENVIRONMENT: local
+    ports:
+      - "8084:8080"
+    volumes:
+      - migration-config:/config
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
+      otel-collector:
+        condition: service_started
+
+  frontend:
+    build:
+      context: .
+      dockerfile: src/TelemetryBridge.Sample.Frontend/Dockerfile
+      args:
+        VITE_API_ORIGIN: http://localhost:8080
+        VITE_OTLP_TRACES_URL: http://localhost:4318/v1/traces
+    ports:
+      - "5173:8080"
+    depends_on:
+      - facade
+
+volumes:
+  postgres-data:
+  tempo-data:
+  loki-data:
+  prometheus-data:
+  grafana-data:
+  migration-config:
+  collector-queue:

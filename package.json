@@ -1,0 +1,15 @@
+{
+  "name": "telemetrybridge-workspace",
+  "private": true,
+  "workspaces": [
+    "src/TelemetryBridge.Browser",
+    "src/TelemetryBridge.Sample.Frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}

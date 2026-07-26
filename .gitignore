@@ -1,0 +1,19 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+.npm-cache/
+artifacts/
+.vs/
+.idea/
+.env
+.env.*
+!.env.example
+TestResults/
+coverage/
+*.tsbuildinfo
+src/TelemetryBridge.Sample.Frontend/vite.config.js
+src/TelemetryBridge.Sample.Frontend/vite.config.d.ts
+*.user
+*.suo
+Final Output.txt

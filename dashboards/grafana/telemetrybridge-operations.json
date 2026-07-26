@@ -1,0 +1,101 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [{ "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count[5m]))", "legendFormat": "{{service_name}}", "refId": "A" }],
+      "title": "RED: request rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 0 },
+      "id": 2,
+      "targets": [{ "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m]))", "legendFormat": "{{service_name}}", "refId": "A" }],
+      "title": "RED: errors",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 0 },
+      "id": 3,
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket[5m])))", "legendFormat": "{{service_name}}", "refId": "A" }],
+      "title": "RED: p95 duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 7 },
+      "id": 4,
+      "targets": [{ "expr": "process_runtime_dotnet_gc_heap_size_bytes", "legendFormat": "{{service_name}} {{generation}}", "refId": "A" }],
+      "title": "ASP.NET / worker memory (USE)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 7 },
+      "id": 5,
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(db_client_operation_duration_seconds_bucket[5m])))", "legendFormat": "{{service_name}}", "refId": "A" }],
+      "title": "Database p95 duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 7 },
+      "id": 6,
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le, server_address) (rate(http_client_request_duration_seconds_bucket[5m])))", "legendFormat": "{{server_address}}", "refId": "A" }],
+      "title": "Dependency p95 duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 14 },
+      "id": 7,
+      "targets": [
+        { "expr": "rate(telemetrybridge_work_items_processed_total[5m])", "legendFormat": "processed/s", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(telemetrybridge_work_items_pending_bucket[5m])))", "legendFormat": "pending p95", "refId": "B" }
+      ],
+      "title": "Background worker",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 14 },
+      "id": 8,
+      "targets": [
+        { "expr": "sum(rate(otelcol_receiver_accepted_spans_total[5m]))", "legendFormat": "accepted", "refId": "A" },
+        { "expr": "sum(rate(otelcol_exporter_sent_spans_total[5m]))", "legendFormat": "exported", "refId": "B" }
+      ],
+      "title": "Sampling effectiveness",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 14 },
+      "id": 9,
+      "targets": [{ "expr": "count(count by (http_route) (http_server_request_duration_seconds_count))", "legendFormat": "route series", "refId": "A" }],
+      "title": "Cardinality: normalized routes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 21 },
+      "id": 10,
+      "targets": [{ "expr": "{service_name=\"telemetrybridge-strangler-facade\"} |= \"Migration\"", "refId": "A" }],
+      "title": "Strangler migration decisions and fallback",
+      "type": "logs"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 41,
+  "tags": ["telemetrybridge", "red", "use", "database", "worker", "sampling", "migration"],
+  "time": { "from": "now-1h", "to": "now" },
+  "timezone": "browser",
+  "title": "TelemetryBridge Operations",
+  "uid": "telemetrybridge-operations",
+  "version": 1
+}

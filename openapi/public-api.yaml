@@ -1,0 +1,50 @@
+openapi: 3.1.0
+info:
+  title: TelemetryBridge Public API
+  version: 1.0.0
+paths:
+  /api/orders:
+    get:
+      operationId: listOrders
+      responses:
+        '200': { description: Orders returned }
+    post:
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [channel]
+              properties:
+                channel: { type: string, enum: [web, mobile, partner] }
+      responses:
+        '201': { description: Order created }
+        '503': { description: Dependency unavailable }
+  /api/orders/{id}:
+    get:
+      operationId: getOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Order returned }
+        '404': { description: Order not found }
+  /api/customers:
+    get:
+      operationId: listCustomers
+      responses:
+        '200': { description: Customers returned }
+  /api/payments/{path}:
+    get:
+      operationId: getPayment
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Payment result }

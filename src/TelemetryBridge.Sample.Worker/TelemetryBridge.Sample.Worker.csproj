@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <PropertyGroup>
+    <Description>Durable sample worker demonstrating W3C message-context continuation.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TelemetryBridge.AspNetCore/TelemetryBridge.AspNetCore.csproj" />
+    <ProjectReference Include="../TelemetryBridge.Core/TelemetryBridge.Core.csproj" />
+    <ProjectReference Include="../TelemetryBridge.Persistence/TelemetryBridge.Persistence.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+</Project>

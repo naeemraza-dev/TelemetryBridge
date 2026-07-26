@@ -1,0 +1,7 @@
+services:
+  otel-collector:
+    volumes:
+      - ./collector/datadog/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    environment:
+      DD_API_KEY: ${DD_API_KEY:?Set DD_API_KEY}
+      DD_SITE: ${DD_SITE:-datadoghq.com}

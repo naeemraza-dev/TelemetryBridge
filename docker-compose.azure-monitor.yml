@@ -1,0 +1,6 @@
+services:
+  otel-collector:
+    volumes:
+      - ./collector/azure-monitor/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    environment:
+      APPLICATIONINSIGHTS_CONNECTION_STRING: ${APPLICATIONINSIGHTS_CONNECTION_STRING:?Set APPLICATIONINSIGHTS_CONNECTION_STRING}

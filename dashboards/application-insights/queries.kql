@@ -1,0 +1,41 @@
+// Failed requests by service
+AppRequests
+| where Success == false
+| summarize failures=count() by AppRoleName, bin(TimeGenerated, 5m)
+
+// Slow API operations
+AppRequests
+| where DurationMs > 2000
+| project TimeGenerated, AppRoleName, Name, DurationMs, OperationId
+
+// Dependency failures and database latency
+AppDependencies
+| summarize failures=countif(Success == false), p95=percentile(DurationMs, 95)
+  by AppRoleName, DependencyType, Target, bin(TimeGenerated, 5m)
+
+// Trace lookup and correlated logs: set traceId before running
+let traceId = "<trace-id>";
+union AppRequests, AppDependencies, AppTraces, AppExceptions
+| where OperationId == traceId
+| order by TimeGenerated asc
+
+// Exceptions by normalized operation
+AppExceptions
+| summarize count() by AppRoleName, OperationName, ExceptionType
+
+// Requests by normalized route
+AppRequests
+| summarize requests=count(), failures=countif(Success == false),
+  p95=percentile(DurationMs, 95) by AppRoleName, Name
+
+// Version regression
+AppRequests
+| summarize requests=count(), failures=countif(Success == false),
+  p95=percentile(DurationMs, 95) by AppRoleName, AppVersion
+
+// Legacy versus modern route comparison
+AppRequests
+| extend target=tostring(Properties["telemetrybridge.modernization.target"])
+| where target in ("legacy", "modern")
+| summarize requests=count(), failures=countif(Success == false),
+  p95=percentile(DurationMs, 95) by target, Name

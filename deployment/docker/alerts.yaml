@@ -1,0 +1,81 @@
+groups:
+  - name: telemetrybridge-applications
+    rules:
+      - alert: TelemetryBridgeHighErrorRate
+        expr: |
+          sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~"5.."}[5m]))
+          / clamp_min(sum(rate(http_server_request_duration_seconds_count[5m])), 1) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Application 5xx rate is above 5%
+      - alert: TelemetryBridgeHighLatency
+        expr: |
+          histogram_quantile(0.95, sum by (le, service_name)
+          (rate(http_server_request_duration_seconds_bucket[5m]))) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Application p95 latency is above two seconds
+      - alert: TelemetryBridgeDatabaseLatency
+        expr: |
+          histogram_quantile(0.95, sum by (le, service_name)
+          (rate(db_client_operation_duration_seconds_bucket[5m]))) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Database p95 latency is above one second
+      - alert: TelemetryBridgeWorkerBacklog
+        expr: |
+          histogram_quantile(0.95,
+          sum by (le) (rate(telemetrybridge_work_items_pending_bucket[5m]))) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Durable worker backlog is growing
+      - alert: TelemetryBridgeMissingTelemetry
+        expr: absent_over_time(http_server_request_duration_seconds_count[15m]) == 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: No application request telemetry has been received
+  - name: telemetrybridge-collector
+    rules:
+      - alert: TelemetryBridgeCollectorExportFailures
+        expr: sum(rate(otelcol_exporter_send_failed_spans_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Collector is failing to export spans
+      - alert: TelemetryBridgeCollectorQueuePressure
+        expr: |
+          max(otelcol_exporter_queue_size)
+          / clamp_min(max(otelcol_exporter_queue_capacity), 1) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Collector exporter queue is more than 80% full
+      - alert: TelemetryBridgeCollectorMemoryPressure
+        expr: process_resident_memory_bytes{job="otel-collector"} > 800000000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Collector resident memory is above the local sizing threshold
+      - alert: TelemetryBridgeCollectorRefusedTelemetry
+        expr: |
+          sum(rate(otelcol_receiver_refused_spans_total[5m]))
+          + sum(rate(otelcol_receiver_refused_metric_points_total[5m]))
+          + sum(rate(otelcol_receiver_refused_log_records_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Collector is refusing telemetry

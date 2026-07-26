@@ -1,0 +1,68 @@
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+  attributes/security:
+    actions:
+      - key: http.request.header.authorization
+        action: delete
+      - key: http.request.header.cookie
+        action: delete
+      - key: url.query
+        action: delete
+      - key: url.full
+        action: delete
+      - key: http.url
+        action: delete
+      - key: db.query.text
+        action: delete
+      - key: db.statement
+        action: delete
+  batch:
+    timeout: 1s
+
+exporters:
+  loadbalancing/traces:
+    routing_key: traceID
+    protocol:
+      otlp:
+        tls:
+          insecure: true
+    resolver:
+      static:
+        hostnames:
+          - tail-sampler-1:4317
+          - tail-sampler-2:4317
+  otlp/base:
+    endpoint: otel-collector:4317
+    tls:
+      insecure: true
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/security, batch]
+      exporters: [loadbalancing/traces]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/security, batch]
+      exporters: [otlp/base]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/security, batch]
+      exporters: [otlp/base]

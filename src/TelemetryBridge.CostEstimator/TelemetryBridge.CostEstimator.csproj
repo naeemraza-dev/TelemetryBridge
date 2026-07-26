@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Description>Vendor-neutral telemetry volume and cost-input estimator.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TelemetryBridge.Core/TelemetryBridge.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,20 @@
+openapi: 3.1.0
+info:
+  title: TelemetryBridge Modern API
+  version: 1.0.0
+paths:
+  /api/orders:
+    get:
+      operationId: listOrders
+      responses:
+        '200': { description: Orders returned }
+    post:
+      operationId: createOrder
+      responses:
+        '201': { description: Order created }
+  /api/orders/{id}:
+    get:
+      operationId: getOrder
+      responses:
+        '200': { description: Order returned }
+        '404': { description: Order not found }

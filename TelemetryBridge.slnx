@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TelemetryBridge.Core/TelemetryBridge.Core.csproj" />
+    <Project Path="src/TelemetryBridge.AspNetCore/TelemetryBridge.AspNetCore.csproj" />
+    <Project Path="src/TelemetryBridge.AdminApi/TelemetryBridge.AdminApi.csproj" />
+    <Project Path="src/TelemetryBridge.Persistence/TelemetryBridge.Persistence.csproj" />
+    <Project Path="src/TelemetryBridge.NLog/TelemetryBridge.NLog.csproj" />
+    <Project Path="src/TelemetryBridge.StranglerFacade/TelemetryBridge.StranglerFacade.csproj" />
+    <Project Path="src/TelemetryBridge.Sample.InternalApi/TelemetryBridge.Sample.InternalApi.csproj" />
+    <Project Path="src/TelemetryBridge.Sample.LegacyApi/TelemetryBridge.Sample.LegacyApi.csproj" />
+    <Project Path="src/TelemetryBridge.Sample.ModernApi/TelemetryBridge.Sample.ModernApi.csproj" />
+    <Project Path="src/TelemetryBridge.Sample.Worker/TelemetryBridge.Sample.Worker.csproj" />
+    <Project Path="src/TelemetryBridge.CostEstimator/TelemetryBridge.CostEstimator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TelemetryBridge.UnitTests/TelemetryBridge.UnitTests.csproj" />
+    <Project Path="tests/TelemetryBridge.ContractTests/TelemetryBridge.ContractTests.csproj" />
+    <Project Path="tests/TelemetryBridge.EndToEndTests/TelemetryBridge.EndToEndTests.csproj" />
+    <Project Path="tests/TelemetryBridge.IntegrationTests/TelemetryBridge.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

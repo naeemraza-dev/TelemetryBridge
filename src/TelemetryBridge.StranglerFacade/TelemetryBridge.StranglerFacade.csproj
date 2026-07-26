@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <Description>OpenAPI-facing YARP Strangler Fig routing facade.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TelemetryBridge.AspNetCore/TelemetryBridge.AspNetCore.csproj" />
+    <ProjectReference Include="../TelemetryBridge.Core/TelemetryBridge.Core.csproj" />
+    <PackageReference Include="Yarp.ReverseProxy" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <Content Include="../../openapi/public-api.yaml" Link="public-api.yaml" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

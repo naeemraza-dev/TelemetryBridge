@@ -1,0 +1,15 @@
+openapi: 3.1.0
+info:
+  title: TelemetryBridge Legacy API
+  version: 1.0.0
+paths:
+  /api/customers:
+    get:
+      operationId: listCustomers
+      responses:
+        '200': { description: Customers returned }
+  /api/payments/{path}:
+    get:
+      operationId: getPayment
+      responses:
+        '200': { description: Payment result }

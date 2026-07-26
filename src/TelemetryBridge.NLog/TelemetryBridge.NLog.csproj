@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>NLog correlation and gradual OTLP migration helpers for TelemetryBridge.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>TelemetryBridge.NLog</PackageId>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TelemetryBridge.AspNetCore/TelemetryBridge.AspNetCore.csproj" />
+    <PackageReference Include="NLog" />
+    <PackageReference Include="NLog.Extensions.Logging" />
+    <PackageReference Include="NLog.Targets.OpenTelemetryProtocol" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

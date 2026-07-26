@@ -1,0 +1,69 @@
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 1024
+    spike_limit_mib: 256
+  filter/drop-noise:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["http.route"] == "/health"'
+        - 'attributes["url.path"] == "/health"'
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 50000
+    expected_new_traces_per_sec: 1000
+    policies:
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      - name: slow-traces
+        type: latency
+        latency:
+          threshold_ms: 2000
+      - name: critical-routes
+        type: string_attribute
+        string_attribute:
+          key: http.route
+          values: [/api/orders, /api/payments]
+      - name: incident-debug
+        type: string_attribute
+        string_attribute:
+          key: telemetrybridge.incident.debug
+          values: ["true"]
+      - name: normal-baseline
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 5
+  batch:
+    timeout: 2s
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+    sending_queue:
+      enabled: true
+      queue_size: 4096
+    retry_on_failure:
+      enabled: true
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/drop-noise, tail_sampling, batch]
+      exporters: [otlp/tempo]

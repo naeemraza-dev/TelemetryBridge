@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <Description>Instrumented legacy-compatible API used by the Strangler facade.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TelemetryBridge.AspNetCore/TelemetryBridge.AspNetCore.csproj" />
+    <ProjectReference Include="../TelemetryBridge.Core/TelemetryBridge.Core.csproj" />
+    <ProjectReference Include="../TelemetryBridge.NLog/TelemetryBridge.NLog.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="NLog.config" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

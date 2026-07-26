@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: TelemetryBridge
+    orgId: 1
+    folder: TelemetryBridge
+    type: file
+    disableDeletion: true
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards
