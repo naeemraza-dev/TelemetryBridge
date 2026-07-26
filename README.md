@@ -57,6 +57,16 @@ flowchart TB
     Loki --> Grafana
 ```
 
+### Flow Summary
+
+- The React frontend sends requests through the YARP Strangler Facade using W3C Trace Context.
+- The facade routes requests either to the legacy API or the modern ASP.NET Core API.
+- The modern API can call internal services and persist durable work items in PostgreSQL.
+- The background worker processes durable work items from the database.
+- All application components export telemetry to the OpenTelemetry Collector.
+- The Collector routes traces to Tempo, metrics to Prometheus, and logs to Loki.
+- Grafana provides a unified view of traces, metrics, and logs.
+
 See [docs/architecture.md](docs/architecture.md) for the design, trade-offs, repository
 structure, and phased roadmap.
 
