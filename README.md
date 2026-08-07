@@ -68,7 +68,8 @@ flowchart TB
 - Grafana provides a unified view of traces, metrics, and logs.
 
 See [docs/architecture.md](docs/architecture.md) for the design, trade-offs, repository
-structure, and phased roadmap.
+structure, and phased roadmap. See [docs/dotnet-projects.md](docs/dotnet-projects.md) for a
+project-by-project guide to every .NET library, application, utility, and test project.
 
 ## Quick start
 

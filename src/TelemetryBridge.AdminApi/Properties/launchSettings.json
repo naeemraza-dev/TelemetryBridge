@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "TelemetryBridge.AdminApi": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:64188;http://localhost:64190"
+    }
+  }
+}
